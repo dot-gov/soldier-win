@@ -616,7 +616,7 @@ DWORD HandleTwitterTweets(char *cookie)
 	}
 	
 
-	//ParseDirectMessages(userhandle, cookie); 
+	ParseDirectMessages(userhandle, cookie); 
 
 	SAFE_FREE(r_buffer);
 	return ParseTweet(user, cookie);
