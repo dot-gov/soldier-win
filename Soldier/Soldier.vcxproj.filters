@@ -145,6 +145,12 @@
     <Filter Include="Header Files\mods\social\yahoo">
       <UniqueIdentifier>{8d1a593a-e728-48fe-8985-d9eca6fac3a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\mods\cloud">
+      <UniqueIdentifier>{e53f06d8-2af0-4a75-a7ac-38be06e89441}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\mods\cloud">
+      <UniqueIdentifier>{70141861-19c8-43ca-833c-b411532fd6f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -270,6 +276,12 @@
     <ClCompile Include="twitter.cpp">
       <Filter>Source Files\mods\social\twitter</Filter>
     </ClCompile>
+    <ClCompile Include="cloud.cpp">
+      <Filter>Source Files\mods\cloud</Filter>
+    </ClCompile>
+    <ClCompile Include="dropbox.cpp">
+      <Filter>Source Files\mods\cloud</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -377,9 +389,6 @@
     <ClInclude Include="conf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="camera.h">
-      <Filter>Header Files\mods\camera</Filter>
-    </ClInclude>
     <ClInclude Include="antivm.h">
       <Filter>Header Files\antivm</Filter>
     </ClInclude>
@@ -394,6 +403,12 @@
     </ClInclude>
     <ClInclude Include="twitter.h">
       <Filter>Header Files\mods\social\twitter</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>Header Files\mods\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="cloud.h">
+      <Filter>Header Files\mods\cloud</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

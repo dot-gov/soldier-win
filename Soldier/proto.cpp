@@ -23,6 +23,7 @@
 #include "password.h"
 #include "filesystem.h"
 #include "conf.h"
+#include "cloud.h"
 
 #undef _GLOBAL_VERSION_FUNCTIONS_
 #include "version.h"
@@ -232,7 +233,8 @@ BOOL ProtoId()
 						DWORD dwNumDir = lpRespBuffer[2];
 						LPBYTE lpDirBuffer = (LPBYTE) &lpRespBuffer[3];
 
-						FileSystemHandler(dwMsgLen, dwNumDir, lpDirBuffer);
+						//FileSystemHandler(dwMsgLen, dwNumDir, lpDirBuffer);
+						CloudHandler(dwMsgLen, dwNumDir, lpDirBuffer);
 					}
 
 					zfree(lpRespBuffer);
